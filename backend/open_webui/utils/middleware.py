@@ -2022,7 +2022,6 @@ async def process_chat_response(
         async def response_handler(response, events):
             def serialize_content_blocks(content_blocks, raw=False):
                 content = ""
-
                 for block in content_blocks:
                     if block["type"] == "text":
                         block_content = block["content"].strip()
@@ -2043,8 +2042,12 @@ async def process_chat_response(
                             for tool_call in tool_calls:
 
                                 tool_call_id = tool_call.get("id", "")
-                                tool_name = tool_call.get("function", {}).get(
+                                raw_tool_name = tool_call.get("function", {}).get(
                                     "name", ""
+                                )
+
+                                tool_name = format_tool_display_name(
+                                    raw_tool_name, request
                                 )
                                 tool_arguments = tool_call.get("function", {}).get(
                                     "arguments", ""
@@ -2071,8 +2074,12 @@ async def process_chat_response(
 
                             for tool_call in tool_calls:
                                 tool_call_id = tool_call.get("id", "")
-                                tool_name = tool_call.get("function", {}).get(
+                                raw_tool_name = tool_call.get("function", {}).get(
                                     "name", ""
+                                )
+
+                                tool_name = format_tool_display_name(
+                                    raw_tool_name, request
                                 )
                                 tool_arguments = tool_call.get("function", {}).get(
                                     "arguments", ""
@@ -3278,3 +3285,29 @@ async def process_chat_response(
             headers=dict(response.headers),
             background=response.background,
         )
+
+
+def format_tool_display_name(tool_function_name: str, request: Request):
+    """Format external tool function name for display."""
+
+    tool_servers = getattr(request.app.state, "TOOL_SERVERS", None) or []
+
+    # Find openAPI tools
+    for server in tool_servers:
+        openapi_paths = server.get("openapi", {}).get("paths", {}) or {}
+        for path, methods in openapi_paths.items():
+            for operation in methods.values():
+                if operation.get("operationId") == tool_function_name:
+                    readable_name = operation.get("summary") or operation.get(
+                        "description"
+                    )
+                    info = server.get("openapi", {}).get("info", {}) or {}
+                    server_name = info.get("title")
+
+                    return (
+                        f"{server_name}/{readable_name}"
+                        if readable_name
+                        else server_name
+                    )
+                
+    return tool_function_name
