@@ -3309,5 +3309,30 @@ def format_tool_display_name(tool_function_name: str, request: Request):
                         if readable_name
                         else server_name
                     )
+    
+    # Find streameable tools by matching tool_function_name with server id
+    tool_server_connections = (
+        getattr(request.app.state.config, "TOOL_SERVER_CONNECTIONS", None) or []
+    )
+    
+    for connection in tool_server_connections:
+        info = connection.get("info", {}) or {}
+        server_id = info.get("id", "")
+        
+        if server_id and server_id in tool_function_name:
+            server_name = info.get("name") or info.get("title") or server_id
+            
+            readable_name = (
+                tool_function_name.replace("-", " ")
+                .replace("_", " ")
+                .strip()
+                .title()
+            )
+            
+            return (
+                f"{server_name}/{readable_name}"
+                if readable_name
+                else server_name
+            )
                 
     return tool_function_name
