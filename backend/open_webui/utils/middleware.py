@@ -3294,14 +3294,14 @@ def format_tool_display_name(tool_function_name: str, request: Request):
 
     # Find openAPI tools
     for server in tool_servers:
-        openapi_paths = server.get("openapi", {}).get("paths", {}) or {}
+        openapi_paths = server.get("openapi").get("paths") or {}
         for path, methods in openapi_paths.items():
             for operation in methods.values():
                 if operation.get("operationId") == tool_function_name:
                     readable_name = operation.get("summary") or operation.get(
                         "description"
                     )
-                    info = server.get("openapi", {}).get("info", {}) or {}
+                    info = server.get("openapi").get("info") or {}
                     server_name = info.get("title")
 
                     return (
@@ -3316,8 +3316,8 @@ def format_tool_display_name(tool_function_name: str, request: Request):
     )
     
     for connection in tool_server_connections:
-        info = connection.get("info", {}) or {}
-        server_id = info.get("id", "")
+        info = connection.get("info")
+        server_id = info.get("id")
         
         if server_id and server_id in tool_function_name:
             server_name = info.get("name") or info.get("title") or server_id
