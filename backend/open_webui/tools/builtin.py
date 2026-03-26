@@ -1989,7 +1989,7 @@ async def list_knowledge(
 async def query_knowledge_files(
     query: str,
     knowledge_ids: Optional[list[str]] = None,
-    count: int = 5,
+    count: Optional[int] = None,
     __request__: Request = None,
     __user__: dict = None,
     __model_knowledge__: list[dict] = None,
@@ -2000,7 +2000,7 @@ async def query_knowledge_files(
 
     :param query: The search query to find semantically relevant content
     :param knowledge_ids: Optional list of KB ids to limit search to specific knowledge bases
-    :param count: Maximum number of results to return (default: 5)
+    :param count: Maximum number of results to return (default: uses TOP_K config setting)
     :return: JSON with relevant chunks containing content, source filename, and relevance score
     """
     if __request__ is None:
@@ -2009,12 +2009,16 @@ async def query_knowledge_files(
     if not __user__:
         return json.dumps({'error': 'User context not available'})
 
+    # Use TOP_K config as default if no count specified
+    if count is None:
+        count = __request__.app.state.config.TOP_K
+
     # Coerce parameters from LLM tool calls (may come as strings)
     if isinstance(count, str):
         try:
             count = int(count)
         except ValueError:
-            count = 5  # Default fallback
+            count = __request__.app.state.config.TOP_K  # Fallback to config
 
     # Handle knowledge_ids being string "None", "null", or empty
     if isinstance(knowledge_ids, str):
