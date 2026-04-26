@@ -79,6 +79,7 @@
 					name: tool.name,
 					description: tool.meta.description,
 					enabled: selectedToolIds.includes(tool.id),
+					domain: tool.domain || tool.meta.url || tool.url || tool.meta.website || '',
 					...tool
 				};
 				return a;
@@ -370,7 +371,16 @@
 								<div class="flex flex-1 gap-2 items-center">
 									<Tooltip content={tools[toolId]?.name ?? ''} placement="top">
 										<div class="shrink-0">
-											<Wrench />
+											{#if tools[toolId]?.domain}
+												{@const faviconUrl = `https://icons.duckduckgo.com/ip3/${tools[toolId].domain}.ico`}
+												<img
+													src={faviconUrl}
+													alt="{tools[toolId].name} favicon"
+													class="size-4 rounded-full shrink-0"
+												/>
+											{:else}
+												<Wrench />
+											{/if}
 										</div>
 									</Tooltip>
 									<Tooltip content={tools[toolId]?.description ?? ''} placement="top-start">

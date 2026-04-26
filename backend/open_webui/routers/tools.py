@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 import time
 import re
+from urllib.parse import urlparse
 import aiohttp
 from open_webui.env import AIOHTTP_CLIENT_SESSION_SSL, AIOHTTP_CLIENT_TIMEOUT
 from open_webui.models.groups import Groups
@@ -129,6 +130,8 @@ async def get_tools(
                 )
 
             server_config = server.get('config', {})
+            raw_url = server.get('url', '')
+            domain = urlparse(raw_url).hostname or ''
 
             tool_id = f'server:mcp:{server.get("info", {}).get("id")}'
             server_access_grants[tool_id] = server_config.get('access_grants', [])
@@ -139,6 +142,7 @@ async def get_tools(
                         'id': tool_id,
                         'user_id': tool_id,
                         'name': server.get('info', {}).get('name', 'MCP Tool Server'),
+                        'domain': domain,
                         'meta': {
                             'description': server.get('info', {}).get('description', ''),
                         },
